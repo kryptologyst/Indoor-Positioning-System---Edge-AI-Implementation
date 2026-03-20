@@ -1,0 +1,45 @@
+# Raspberry Pi 4 Configuration for Indoor Positioning System
+
+device:
+  name: "raspberry_pi_4"
+  platform: "arm64"
+  cpu_cores: 4
+  memory_mb: 4096
+  storage_gb: 32
+  gpu_enabled: false
+
+# Model optimization for Raspberry Pi
+model:
+  max_size_mb: 10
+  quantization: "int8"
+  pruning_sparsity: 0.3
+  batch_size: 1
+  input_shape: [4]  # 4 access points
+
+# Performance constraints
+performance:
+  max_inference_time_ms: 1000
+  max_memory_usage_mb: 512
+  target_fps: 1
+  power_consumption_w: 3.5
+
+# Deployment settings
+deployment:
+  framework: "tflite"
+  optimization_level: 2
+  use_npu: false
+  cpu_affinity: [0, 1]  # Use first 2 cores
+
+# Communication settings
+communication:
+  wifi_enabled: true
+  bluetooth_enabled: true
+  mqtt_qos: 1
+  update_interval_ms: 2000
+
+# System settings
+system:
+  auto_start: true
+  watchdog_enabled: true
+  log_level: "WARNING"
+  temp_threshold_c: 70

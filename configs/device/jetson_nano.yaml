@@ -1,0 +1,50 @@
+# Jetson Nano Configuration for Indoor Positioning System
+
+device:
+  name: "jetson_nano"
+  platform: "arm64"
+  cpu_cores: 4
+  memory_mb: 4096
+  storage_gb: 32
+  gpu_enabled: true
+  gpu_memory_mb: 1024
+
+# Model optimization for Jetson Nano
+model:
+  max_size_mb: 50
+  quantization: "int8"
+  pruning_sparsity: 0.2
+  batch_size: 1
+  input_shape: [4]  # 4 access points
+  use_tensorrt: true
+
+# Performance constraints
+performance:
+  max_inference_time_ms: 500
+  max_memory_usage_mb: 1024
+  target_fps: 2
+  power_consumption_w: 10
+
+# Deployment settings
+deployment:
+  framework: "tensorrt"
+  optimization_level: 3
+  use_npu: false
+  cpu_affinity: [0, 1, 2, 3]  # Use all cores
+  gpu_affinity: 0
+
+# Communication settings
+communication:
+  wifi_enabled: true
+  bluetooth_enabled: true
+  ethernet_enabled: true
+  mqtt_qos: 1
+  update_interval_ms: 1000
+
+# System settings
+system:
+  auto_start: true
+  watchdog_enabled: true
+  log_level: "INFO"
+  temp_threshold_c: 80
+  fan_control: true

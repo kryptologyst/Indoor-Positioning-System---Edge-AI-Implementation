@@ -1,0 +1,111 @@
+# Indoor Positioning System Configuration
+
+# General settings
+seed: 42
+n_samples: 2000
+n_access_points: 4
+area_size: [20, 20]  # meters
+rssi_range: [-90, -30]  # dBm
+noise_std: 5
+test_size: 0.2
+
+# Model configuration
+model:
+  hidden_layers: [64, 32]
+  activation: "relu"
+  dropout: 0.2
+  epochs: 50
+  batch_size: 32
+  learning_rate: 0.001
+  early_stopping_patience: 10
+  lr_reduction_patience: 5
+
+# Quantization settings
+quantization:
+  enabled: true
+  representative_dataset_size: 100
+  target_ops: ["TFLITE_BUILTINS_INT8"]
+  input_type: "int8"
+  output_type: "int8"
+
+# Pruning settings
+pruning:
+  enabled: true
+  sparsity: 0.5
+  structured: true
+  fine_tune_epochs: 10
+
+# Edge deployment targets
+deployment:
+  targets:
+    - "tflite"
+    - "onnx"
+    - "coreml"
+  device_configs:
+    raspberry_pi:
+      cpu_cores: 4
+      memory_mb: 1024
+      inference_timeout_ms: 1000
+    jetson_nano:
+      cpu_cores: 4
+      memory_mb: 4096
+      gpu_enabled: true
+      inference_timeout_ms: 500
+    android:
+      min_api_level: 21
+      memory_mb: 512
+      inference_timeout_ms: 200
+
+# Data pipeline settings
+data_pipeline:
+  streaming:
+    enabled: true
+    buffer_size: 1000
+    batch_size: 1
+  sensors:
+    wifi_scan_interval_ms: 1000
+    rssi_smoothing_window: 5
+  preprocessing:
+    normalize: true
+    outlier_threshold: 3.0
+
+# Communication settings
+communication:
+  mqtt:
+    enabled: true
+    broker: "localhost"
+    port: 1883
+    topic_prefix: "ips/"
+    qos: 1
+  websocket:
+    enabled: true
+    port: 8765
+    max_connections: 10
+
+# Evaluation metrics
+evaluation:
+  accuracy_thresholds: [1.0, 2.0, 5.0]  # meters
+  performance_metrics:
+    - "latency_p50"
+    - "latency_p95"
+    - "throughput_fps"
+    - "memory_usage_mb"
+    - "energy_per_inference_j"
+  robustness_tests:
+    noise_levels: [0.1, 0.2, 0.5]
+    packet_loss_rates: [0.01, 0.05, 0.1]
+
+# Logging and monitoring
+logging:
+  level: "INFO"
+  file: "assets/logs/ips.log"
+  max_size_mb: 10
+  backup_count: 5
+
+monitoring:
+  enabled: true
+  metrics_interval_s: 60
+  alert_thresholds:
+    accuracy_drop_percent: 10
+    latency_increase_percent: 50
+    memory_usage_percent: 90

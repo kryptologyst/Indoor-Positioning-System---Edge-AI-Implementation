@@ -1,0 +1,130 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black ruff pytest
+    
+    - name: Run black
+      run: black --check src/ tests/ main.py
+    
+    - name: Run ruff
+      run: ruff check src/ tests/ main.py
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11']
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run tests
+      run: |
+        pytest tests/ -v --cov=src --cov-report=xml
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  model-export:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Train and export model
+      run: |
+        python main.py train --config configs/default.yaml
+        python main.py export --model-path assets/models/model.h5 --target tflite
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: trained-models
+        path: assets/models/
+    
+    - name: Upload plots
+      uses: actions/upload-artifact@v3
+      with:
+        name: training-plots
+        path: assets/plots/
+
+  demo-test:
+    runs-on: ubuntu-latest
+    needs: [model-export]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Download trained models
+      uses: actions/download-artifact@v3
+      with:
+        name: trained-models
+        path: assets/models/
+    
+    - name: Test demo import
+      run: |
+        python -c "from demo.app import run_streamlit_app; print('Demo imports successfully')"
+    
+    - name: Test model loading
+      run: |
+        python -c "
+        import sys
+        sys.path.append('src')
+        from models.indoor_positioning import IndoorPositioningSystem
+        ips = IndoorPositioningSystem()
+        print('Model system initializes successfully')
+        "
